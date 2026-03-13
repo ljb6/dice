@@ -6,41 +6,42 @@
 
 using namespace std;
 
-vector<int>
-topoSort(vector<vector<int>> &adj)
-{
-    int n = adj.size();
-    vector<int> indegree(n, 0);
-    queue<int> q;
-    vector<int> list;
+bool dfs(int u, vector<vector<int>>& adj, vector<int>& state, stack<int>& st) {
+    state[u] = 1;
 
-    for (int i = 0; i < n; i++) {
-        for (int next : adj[i])
-            indegree[next]++;
+    for (int v : adj[u]) {
+        if (state[v] == 1) return true;
+        if (state[v] == 0)
+            if (dfs(v, adj, state, st)) return true;
     }
 
-    for (int i = 0; i < n; i++)
-        if (indegree[i] == 0)
-            q.push(i);
+    state[u] = 2;
+    st.push(u);
+    return false;
+}
 
-    while (!q.empty()) {
-        int top = q.front();
-        q.pop();
-        list.push_back(top);
-        for (int next : adj[top]) {
-            indegree[next]--;
-            if (indegree[next] == 0)
-                q.push(next);
+vector<int> topoSort(vector<vector<int>>& adj) {
+    int n = adj.size();
+    vector<int> state(n, 0);
+    stack<int> st;
+
+    for (int i = 0; i < n; i++) {
+        if (state[i] == 0) {
+            if (dfs(i, adj, state, st)) {
+                cout << "Error: cicle detected!\n";
+                return {};
+            }
         }
     }
 
-    if ((int)list.size() != n) {
-        cerr << "Error: cicle detected\n";
-        return {};
+    vector<int> res;
+    while (!st.empty()) {
+        res.push_back(st.top());
+        st.pop();
     }
-
-    return list;
+    return res;
 }
+
 
 void
 addEdge(vector<vector<int>> &adj, int u, int v)
