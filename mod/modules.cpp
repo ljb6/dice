@@ -1,3 +1,5 @@
+#include <fstream>
+#include <sstream>
 #include <bits/stdc++.h>
 
 #define pb push_back
@@ -46,38 +48,32 @@ addEdge(vector<vector<int>> &adj, int u, int v)
     adj[u].pb(v);
 }
 
-vector<string>
-split(const string &s, char delim)
-{
-    istringstream iss(s);
-    vector<string> parts;
-    string part;
-    while (getline(iss, part, delim))
-        parts.pb(part);
-
-    return parts;
-}
-
 int
 main()
 {
-    freopen("input.txt", "r", stdin);
-    freopen("output.txt", "w", stdout);
-
-    // input size (num of lines)
-    int n = 2;
+    ifstream file("input.txt");
+    string line;
 
     vector<string> modules;
     vector<vector<string>> parsed;
-    vector<vector<int>> adj(n);
 
-    for (int i = 0; i < n; i++) {
-        string line;
-        cin >> line;
-        vector<string> parts = split(line, ',');
+    int n = 0;
+    while (getline(file, line)) {
+        for (char& c : line) if (c == ':') c = ' ';
+
+        istringstream iss(line);
+        vector<string> parts;
+        string token;
+
+        while (iss >> token) parts.pb(token);
+
         modules.pb(parts[0]);
         parsed.pb(parts);
+
+        n++;
     }
+
+    vector<vector<int>> adj(n);
 
     for (int i = 0; i < n; i++) {
         for (int j = 1; j < (int)parsed[i].size(); j++) {
