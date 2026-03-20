@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "modules.h"
+
 #define MAX_N    256
 #define MAX_NAME 64
 
@@ -11,14 +13,14 @@ typedef struct {
     int n;
 } Graph;
 
-void
+static void
 graph_init(Graph *g, int n)
 {
     memset(g, 0, sizeof(*g));
     g->n = n;
 }
 
-void
+static void
 add_edge(Graph *g, int u, int v)
 {
     g->to[u][g->size[u]++] = v;
@@ -43,7 +45,7 @@ dfs(Graph *g, int u, int *state, int *stack, int *top)
     return 0;
 }
 
-int
+static int
 topo_sort(Graph *g, int *result)
 {
     int state[MAX_N] = {0};
@@ -74,44 +76,48 @@ find_module(char names[][MAX_NAME], int n, const char *name)
     return -1;
 }
 
-int
-main(void)
+char *
+resolve_modules(const char *input)
 {
-    FILE *file = fopen("input.txt", "r");
-    if (!file) {
-        fprintf(stderr, "Error: cannot open input.txt\n");
-        return 1;
-    }
+    char buf[4096];
+    strncpy(buf, input, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
 
     char modules[MAX_N][MAX_NAME];
     char deps[MAX_N][MAX_N][MAX_NAME];
     int dep_count[MAX_N] = {0};
     int n                = 0;
-    char line[1024];
 
-    while (fgets(line, sizeof(line), file)) {
-        int len = strlen(line);
-        if (len == 0)
+    char *p = buf;
+    while (*p) {
+        char *end  = strchr(p, '\n');
+        char *line = p;
+        if (end) {
+            *end = '\0';
+            p    = end + 1;
+        } else {
+            p += strlen(p);
+        }
+
+        if (*line == '\0')
             continue;
-        if (len > 0 && line[len - 1] == '\n')
-            line[--len] = '\0';
 
         char *colon = strchr(line, ':');
         if (!colon) {
-            fprintf(stderr, "Error: invalid format at line %d\n", n + 1);
-            return 1;
+            fprintf(stderr, "Error: invalid format\n");
+            return NULL;
         }
 
         char name[MAX_NAME] = "";
         int ni              = 0;
-        for (char *p = line; p < colon; p++)
-            if (*p != ' ' && *p != '\t')
-                name[ni++] = *p;
+        for (char *q = line; q < colon; q++)
+            if (*q != ' ' && *q != '\t')
+                name[ni++] = *q;
         name[ni] = '\0';
 
         if (ni == 0) {
-            fprintf(stderr, "Error: missing module name at line %d\n", n + 1);
-            return 1;
+            fprintf(stderr, "Error: missing module name\n");
+            return NULL;
         }
 
         strcpy(modules[n], name);
@@ -124,8 +130,6 @@ main(void)
 
         n++;
     }
-
-    fclose(file);
 
     Graph g;
     graph_init(&g, n);
@@ -141,10 +145,19 @@ main(void)
     int result[MAX_N];
     int len = topo_sort(&g, result);
     if (len < 0)
-        return 1;
+        return NULL;
 
-    for (int i = 0; i < len; i++)
-        printf("%s\n", modules[result[i]]);
+    size_t out_size = (size_t)len * (MAX_NAME + 1) + 1;
+    char *out       = malloc(out_size);
+    if (!out)
+        return NULL;
 
-    return 0;
+    out[0] = '\0';
+    for (int i = 0; i < len; i++) {
+        strcat(out, modules[result[i]]);
+        if (i < len - 1)
+            strcat(out, "\n");
+    }
+
+    return out;
 }
