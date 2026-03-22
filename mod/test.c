@@ -21,7 +21,24 @@ void
 test(void)
 {
     struct Test tests[] = {
-        {.name = "Case 1", .input = "a : b c\nb : c\nc :", .output = "c\nb\na"},
+        {.name   = "Undeclared dep",
+         .input  = "a : b c\nb : c",
+         .output = "c\nb\na"},
+        {.name = "Single module", .input = "a :", .output = "a"},
+        {.name = "Single undeclared", .input = "a : b", .output = "b\na"},
+        {.name   = "Chain",
+         .input  = "a : b\nb : c\nc : d\nd :",
+         .output = "d\nc\nb\na"},
+        {.name   = "Chain undeclared tail",
+         .input  = "a : b\nb : c\nc : d",
+         .output = "d\nc\nb\na"},
+        {.name = "No deps", .input = "a :\nb :\nc :", .output = "c\nb\na"},
+        {.name   = "Diamond",
+         .input  = "a : b c\nb : d\nc : d\nd :",
+         .output = "d\nc\nb\na"},
+        {.name   = "Diamond undeclared",
+         .input  = "a : b c\nb : d\nc : d",
+         .output = "d\nc\nb\na"},
         {0},
     };
 
