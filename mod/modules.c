@@ -131,14 +131,23 @@ resolve_modules(const char *input)
         n++;
     }
 
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < dep_count[i]; j++) {
+            if (find_module(modules, n, deps[i][j]) < 0) {
+                strcpy(modules[n], deps[i][j]);
+                dep_count[n] = 0;
+                n++;
+            }
+        }
+    }
+
     Graph g;
     graph_init(&g, n);
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < dep_count[i]; j++) {
             int dep = find_module(modules, n, deps[i][j]);
-            if (dep >= 0)
-                add_edge(&g, dep, i);
+            add_edge(&g, dep, i);
         }
     }
 
